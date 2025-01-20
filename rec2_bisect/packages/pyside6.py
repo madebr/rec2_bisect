@@ -13,6 +13,9 @@ def download_extract_pyside6() -> None:
     shutil.rmtree(download_path, ignore_errors=True)
     download_path.mkdir(parents=True)
 
+    shutil.rmtree(PYSIDE6_ROOT, ignore_errors=True)
+    PYSIDE6_ROOT.mkdir(parents=True)
+
     print("[ ] Downloading PySide6 ...")
     subprocess.check_call([
         sys.executable,

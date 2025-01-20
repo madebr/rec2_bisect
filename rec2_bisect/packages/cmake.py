@@ -38,7 +38,6 @@ def download_extract_cmake() -> None:
             if arcname.endswith("/"):
                 target_path.mkdir(exist_ok=True)
                 continue
-            print(f"{arcname} -> {target_path.parent}")
             data = zf.read(arcname)
             with open(target_path, "wb") as f:
                 f.write(data)

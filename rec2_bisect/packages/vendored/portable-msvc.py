@@ -99,6 +99,7 @@ for target in targets:
   if target not in ALL_TARGETS:
     sys.exit(f"Unknown {target} target architecture!")
 
+
 ### get main manifest
 
 URL = MANIFEST_PREVIEW_URL if args.preview else MANIFEST_URL
@@ -115,7 +116,7 @@ except urllib.error.URLError as err:
     except ModuleNotFoundError:
       print("ERROR: please install 'certifi' package to use Mozilla certificates")
       print("ERROR: or update your Windows certs, see instructions here: https://woshub.com/updating-trusted-root-certificates-in-windows-10/#h2_3")
-      exit()
+      sys.exit()
     print("NOTE: retrying with certifi certificates")
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     manifest = json.loads(download(URL))
@@ -216,7 +217,7 @@ for target in targets:
   if redist_pkg not in packages:
     redist_name = f"microsoft.visualcpp.crt.redist.{target}{redist_suffix}"
     redist = first(packages[redist_name])
-    redist_pkg = first(redist["packages"], lambda dep: dep.endswith(".base")).lower()
+    redist_pkg = first(redist["dependencies"], lambda dep: dep.endswith(".base")).lower()
   msvc_packages += [redist_pkg]
 
 for pkg in sorted(msvc_packages):
@@ -256,9 +257,8 @@ for target in targets:
 
 with tempfile.TemporaryDirectory(dir=DOWNLOADS) as d:
   dst = Path(d)
-
   sdk_pkg = packages[sdk_pid][0]
-  sdk_pkg = packages[first(sdk_pkg["packages"]).lower()][0]
+  sdk_pkg = packages[first(sdk_pkg["dependencies"]).lower()][0]
 
   msi = []
   cabs = []
