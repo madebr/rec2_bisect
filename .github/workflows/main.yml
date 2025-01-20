@@ -1,0 +1,23 @@
+name: Build Windows archive
+on: [push, pull_request]
+
+jobs:
+  dist:
+    name: Build Windows archive
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking out the code
+        uses: actions/checkout@v4
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Create archive
+        run: |
+          python create_package.py
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive
+          path: |
+            /tmp/rec2-bisector-package-creation-root/dist/rec2-bisect.zip
