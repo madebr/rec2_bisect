@@ -52,16 +52,17 @@ for whl in downloaded_whl_archives:
         zf.extractall(PACKAGE_ROOT)
 
 with zipfile.ZipFile(ZIP_PACKAGE_PATH, "w") as zf:
+    arc_root = Path("rec2_bisect")
     for root, _, filenames in os.walk(PACKAGE_ROOT):
         rel_path = Path(root).relative_to(PACKAGE_ROOT)
         for filename in filenames:
-            zf.write(str(Path(root) / filename), arcname=str(rel_path / filename))
+            zf.write(str(Path(root) / filename), arcname=str(arc_root / rel_path / filename))
     for root, _, filenames in os.walk(PROJECT_ROOT / "rec2_bisect"):
         rel_path = Path(root).relative_to(PROJECT_ROOT)
         for filename in filenames:
-            zf.write(str(Path(root) / filename), arcname=str(rel_path / filename))
-        zf.write(PROJECT_ROOT / "run.bat", arcname="run.bat")
-        zf.write(PROJECT_ROOT / "build.bat", arcname="build.bat")
-        zf.write(PROJECT_ROOT / "download.bat", arcname="download.bat")
+            zf.write(str(Path(root) / filename), arcname=str(arc_root / rel_path / filename))
+    zf.write(PROJECT_ROOT / "run.bat", arcname=str(arc_root / "run.bat"))
+    zf.write(PROJECT_ROOT / "build.bat", arcname=str(arc_root / "build.bat"))
+    zf.write(PROJECT_ROOT / "download.bat", arcname=str(arc_root / "download.bat"))
 
 print(f"[X] Created {ZIP_PACKAGE_PATH}")
