@@ -100,7 +100,7 @@ class REC2:
         shutil.copyfile(src=build_dll_path, dst=rec2_cache_dll_path)
         shutil.copyfile(src=build_injector_path, dst=rec2_cache_injector_path)
 
-    def run(self):
+    def run(self, args: list[str]):
         hash_current = git_hash(self.source_path)
         build_cache_path = self.cache_path / hash_current
         rec2_cache_dll_path = build_cache_path / REC2_DLL_NAME
@@ -113,7 +113,7 @@ class REC2:
         run_cmd = [
             str(rec2_cache_injector_path),
             "--inject", str(rec2_cache_dll_path),
-        ]
+        ] + args
         print("Running rec2:", run_cmd)
         print("cwd:", self.game_path)
         subprocess.check_call(run_cmd, cwd=self.game_path, env=self.run_env)

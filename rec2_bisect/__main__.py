@@ -20,8 +20,13 @@ def main():
         print("rec2_bisect is only supported on Windows")
         return 1
     parser = argparse.ArgumentParser(allow_abbrev=False)
-    parser.add_argument("--action", choices=("download", "build", "run"))
+    parser.add_argument("--action", required=True, choices=("download", "build", "run"),
+                        help="Argument can be download, build, or run")
+    parser.add_argument("arguments", metavar="ARG", nargs="*", help="Argument of 'run'")
     args = parser.parse_args()
+
+    if args.arguments and args.action != "run":
+        parser.error("Arguments are accepted with 'run' action")
 
     deps_available = dep_manager.check_install_dependencies()
     if args.action != "download" and not all(deps_available.values()):
@@ -44,7 +49,7 @@ def main():
 
     rec2 = REC2.create()
     if args.action == "run":
-        rec2.run()
+        rec2.run(args.arguments)
         return 0
     elif args.action == "build":
         rec2.build()
