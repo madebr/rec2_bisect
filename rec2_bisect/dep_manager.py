@@ -1,10 +1,7 @@
-import argparse
-
 from rec2_bisect.packages.cmake import has_cmake, download_extract_cmake
 from rec2_bisect.packages.git import has_git, download_extract_git
 from rec2_bisect.packages.msvc import has_msvc, download_extract_msvc
 from rec2_bisect.packages.ninja import has_ninja, download_extract_ninja
-from rec2_bisect.packages.pyside6 import has_pyside6, download_extract_pyside6
 
 
 def check_install_dependencies() -> dict[str, bool]:
@@ -13,7 +10,6 @@ def check_install_dependencies() -> dict[str, bool]:
         "git": has_git(),
         "msvc": has_msvc(arch="x86"),
         "ninja": has_ninja(),
-        "pyside6": has_pyside6(),
     }
     for name, r in result.items():
         print(f"{name:<20}{'yes' if r else 'no'}")
@@ -21,7 +17,6 @@ def check_install_dependencies() -> dict[str, bool]:
 
 
 def download_extract_dependencies() -> None:
-    download_extract_pyside6()
     download_extract_cmake()
     download_extract_git()
     download_extract_ninja()

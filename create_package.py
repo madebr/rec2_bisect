@@ -60,7 +60,8 @@ with zipfile.ZipFile(ZIP_PACKAGE_PATH, "w") as zf:
         rel_path = Path(root).relative_to(PROJECT_ROOT)
         for filename in filenames:
             zf.write(str(Path(root) / filename), arcname=str(rel_path / filename))
-        zf.write(PROJECT_ROOT / "start.bat", arcname="start.bat")
+        zf.write(PROJECT_ROOT / "run.bat", arcname="run.bat")
+        zf.write(PROJECT_ROOT / "build.bat", arcname="build.bat")
         zf.write(PROJECT_ROOT / "download.bat", arcname="download.bat")
 
 print(f"[X] Created {ZIP_PACKAGE_PATH}")

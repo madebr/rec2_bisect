@@ -9,7 +9,6 @@ import typing
 
 
 from rec2_bisect.paths import REC2_DEPS_ROOT
-from rec2_bisect.packages.util import join_environments
 
 MSVC_ROOT = REC2_DEPS_ROOT / "msvc/msvc"
 THIS_PATH = Path(__file__).resolve().parent
@@ -27,16 +26,12 @@ class MSVCToolchain:
     dumpbin_exe: Path
 
     @property
-    def extra_env(self) -> dict[str, str]:
+    def env(self) -> dict[str, str]:
         return {
             "PATH": os.path.pathsep.join(str(p) for p in self.path),
             "INCLUDE": os.path.pathsep.join(str(p) for p in self.include_path),
             "LIB": os.path.pathsep.join(str(p) for p in self.lib_path),
         }
-
-    @property
-    def env(self) -> dict[str, str]:
-        return join_environments(self.extra_env)
 
     @classmethod
     def create(cls, arch: str) -> typing.Optional["MSVCToolchain"]:
@@ -49,7 +44,6 @@ class MSVCToolchain:
         except subprocess.CalledProcessError:
             return None
         msvc_env_paths = {}
-        original_env = {k.upper(): v for k, v in os.environ.items()}
         for line in output_env.strip().splitlines(keepends=False):
             k, v = line.split("=", 1)
             if k.upper() in ("PATH", "INCLUDE", "LIB",):
@@ -83,7 +77,11 @@ def download_extract_msvc(arch: str) -> None:
     MSVC_ROOT.mkdir(parents=True)
 
     print("[ ] Creating portable MSVC...")
-    subprocess.check_call([sys.executable, str(PORTABLE_MSVC_PY), "--target", arch, "--accept-license"], cwd=MSVC_ROOT.parent)
+    subprocess.check_call([
+        sys.executable, str(PORTABLE_MSVC_PY),
+        "--target", arch,
+        "--accept-license"
+    ], cwd=MSVC_ROOT.parent)
     print("[x] Creating portable MSVC finished")
 
 
@@ -99,7 +97,11 @@ def has_msvc(arch: str) -> bool:
     selftest_exe.unlink(missing_ok=True)
     selftest_pdb.unlink(missing_ok=True)
     msvc_env = msvc_toolchain.env
-    compile_args = [msvc_toolchain.cl_exe, "/nologo", "/c", str(THIS_PATH / "msvc_selftest.c"), "/MT", f"/Fo{selftest_obj}"]
+    compile_args = [
+        msvc_toolchain.cl_exe, "/nologo",
+        "/c", str(THIS_PATH / "msvc_selftest.c"),
+        "/MT", f"/Fo{selftest_obj}"
+    ]
     try:
         subprocess.check_call(compile_args, text=True, cwd=temp_path, env=msvc_env)
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -107,7 +109,12 @@ def has_msvc(arch: str) -> bool:
         return False
     if not selftest_obj.exists():
         return False
-    link_args = [msvc_toolchain.link_exe, "/nologo", str(selftest_obj), f"/OUT:{selftest_exe}", "/OPT:REF", "/INCREMENTAL:NO", "/DEBUG", f"/PDB:{selftest_pdb}", "user32.lib"]
+    link_args = [
+        msvc_toolchain.link_exe, "/nologo",
+        str(selftest_obj), f"/OUT:{selftest_exe}",
+        "/OPT:REF", "/INCREMENTAL:NO", "/DEBUG",
+        f"/PDB:{selftest_pdb}", "user32.lib"
+    ]
     try:
         subprocess.check_call(link_args, text=True, cwd=temp_path, env=msvc_env)
     except (subprocess.CalledProcessError, FileNotFoundError):

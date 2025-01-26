@@ -12,7 +12,11 @@ THIS_PATH = Path(__file__).resolve().parent
 
 NINJA_URL = "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip"
 NINJA_ROOT = REC2_DEPS_ROOT / "ninja"
+NINJA_PATH = NINJA_ROOT
 NINJA_EXE_PATH = NINJA_ROOT / "ninja.exe"
+NINJA_ENV = {
+    "PATH": NINJA_PATH,
+}
 
 
 def download_extract_ninja() -> None:

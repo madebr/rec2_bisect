@@ -9,8 +9,11 @@ THIS_PATH = Path(__file__).resolve().parent
 
 GIT_URL = "https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.2/PortableGit-2.47.1.2-64-bit.7z.exe"
 GIT_ROOT = REC2_DEPS_ROOT / "git"
-GIT_EXE_PATH = GIT_ROOT / "bin/git.exe"
-
+GIT_PATH = GIT_ROOT / "bin"
+GIT_EXE_PATH = GIT_PATH / "git.exe"
+GIT_ENV = {
+    "PATH": GIT_PATH,
+}
 
 def download_extract_git() -> None:
     download_path = REC2_DOWNLOAD_ROOT / "git"

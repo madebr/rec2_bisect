@@ -12,7 +12,11 @@ THIS_PATH = Path(__file__).resolve().parent
 
 CMAKE_URL = "https://github.com/Kitware/CMake/releases/download/v3.31.4/cmake-3.31.4-windows-x86_64.zip"
 CMAKE_ROOT = REC2_DEPS_ROOT / "cmake"
-CMAKE_EXE_PATH = CMAKE_ROOT / "bin/cmake.exe"
+CMAKE_PATH = CMAKE_ROOT / "bin"
+CMAKE_EXE_PATH = CMAKE_PATH / "cmake.exe"
+CMAKE_ENV = {
+    "PATH": CMAKE_PATH,
+}
 
 
 def download_extract_cmake() -> None:
