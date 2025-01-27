@@ -3,6 +3,9 @@ run-name: 'Check rec2 commit history'
 
 on:
   workflow_dispatch:
+    inputs:
+      rec2-ref:
+        description: 'rec2 ref'
 
 jobs:
   build:
@@ -22,6 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: madebr/rec2
+          ref: ${{ inputs.rec2-ref || 'master' }}
           submodules: recursive
           fetch-depth: 0
           path: rec2
