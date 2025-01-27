@@ -1,0 +1,47 @@
+name: 'rec2 history'
+run-name: 'Check rec2 commit history'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Install Mingw toolchain'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 ninja-build
+      - name: 'Setup Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: 'Checkout rec2_bisect'
+        uses: actions/checkout@v4
+      - name: 'Checkout rec2'
+        uses: actions/checkout@v4
+        with:
+          repository: madebr/rec2
+          submodules: recursive
+          fetch-depth: 0
+          path: rec2
+      - name: 'Build rec2 history'
+        run: |
+          initial_commit=$(git -C rec2 log --grep="Initial commit" --pretty="%H")
+          git -C rec2 log --pretty="%H %s" >/tmp/rec2_commits.txt
+          cmake -S $PWD/rec2 -B /tmp/rec2-build -GNinja -DCMAKE_TOOLCHAIN_FILE=$PWD/rec2/cmake/toolchains/mingw32.cmake
+          python scripts/build_history.py \
+            --source $PWD/rec2 \
+            --build /tmp/rec2-build \
+            --commits /tmp/rec2_commits.txt \
+            --log /tmp/build.log
+      - name: 'Cat build.log'
+        run: |
+          cat /tmp/build.log
+      - name: 'Upload log'
+        uses: actions/upload-artifact@v4
+        with:
+          name: log
+          path: |
+            /tmp/rec2_commits.txt
+            /tmp/build.log

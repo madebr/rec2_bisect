@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import zipfile
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 PACKAGER_ROOT = Path(tempfile.gettempdir()) / "rec2-bisector-package-creation-root"
@@ -52,7 +52,7 @@ for whl in downloaded_whl_archives:
         zf.extractall(PACKAGE_ROOT)
 
 with zipfile.ZipFile(ZIP_PACKAGE_PATH, "w") as zf:
-    arc_root = Path("rec2_bisect")
+    arc_root = Path("../rec2_bisect")
     for root, _, filenames in os.walk(PACKAGE_ROOT):
         rel_path = Path(root).relative_to(PACKAGE_ROOT)
         for filename in filenames:
