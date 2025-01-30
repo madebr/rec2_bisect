@@ -22,10 +22,12 @@ def main():
         lines.reverse()
 
     if args.what == "mingw":
+        mingw_cmake_toolchain_path = (args.source / "cmake/toolchains/mingw32.cmake").resolve()
+        assert mingw_cmake_toolchain_path.is_file(), f"{mingw_cmake_toolchain_path} should exist"
         subprocess.check_call([
             "cmake", "-S", str(args.source), "-B", str(args.build), "-GNinja",
             "-DREC2_WERROR=ON",
-            f"-DCMAKE_TOOLCHAIN_FILE={args.source}/cmake/toolchains/mingw32.cmake",
+            f"-DCMAKE_TOOLCHAIN_FILE={mingw_cmake_toolchain_path}",
         ])
     elif args.what == "msvc":
         subprocess.check_call([
@@ -54,11 +56,12 @@ def main():
                         result = "OK"
                     else:
                         result = "SKIP"
-                msg = f"{result:<4} {commit} {descr}\n"
+                msg = f"{result:<4} {commit} {descr}"
 
             except subprocess.SubprocessError:
-                msg = f"FAIL {commit} {descr}\n"
-            fl.write(msg)
+                msg = f"FAIL {commit} {descr}"
+            print(msg)
+            print(msg, file=fl)
             fl.flush()
 
 
