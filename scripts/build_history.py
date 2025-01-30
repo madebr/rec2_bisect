@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 import subprocess
+import sys
 from typing import IO
 
 
@@ -12,12 +13,23 @@ def main():
     parser.add_argument("--build", required=True, type=Path)
     parser.add_argument("--commits", required=True, type=Path)
     parser.add_argument("--log", required=True, type=Path)
+    parser.add_argument("--what", choices=("msvc", "mingw", "checks"), required=True)
     args = parser.parse_args()
 
     with args.commits.open() as f:
         f: IO
         lines = f.readlines()
         lines.reverse()
+
+    if args.what == "mingw":
+        subprocess.check_call([
+            "cmake", "-S", str(args.source), "-B", str(args.build), "-GNinja",
+            f"-DCMAKE_TOOLCHAIN_FILE={args.source}/cmake/toolchains/mingw32.cmake",
+        ])
+    elif args.what == "msvc":
+        subprocess.check_call([
+            "cmake", "-S", str(args.source), "-B", str(args.build), "-GNinja",
+        ])
 
     with args.log.open("a") as fl:
         fl: IO
@@ -26,8 +38,19 @@ def main():
             commit, descr = line.split(" ", 1)
             subprocess.check_call(["git", "checkout", commit], cwd=args.source)
             try:
-                subprocess.check_call(["cmake", "--build", args.build])
-                msg = f"OK   {commit} {descr}\n"
+                if args.what in ("mingw", "msvc"):
+                    subprocess.check_call(["cmake", "--build", args.build])
+                    result = "OK"
+                else:
+                    path_collect_symbols_py = args.source / "scripts/collect-symbols.py"
+                    if path_collect_symbols_py.is_file():
+                        subprocess.check_call([
+                            sys.executable, str(path_collect_symbols_py), "--summary", "-Werror",
+                        ])
+                        result = "OK"
+                    else:
+                        result = "SKIP"
+                msg = f"{result:<4} {commit} {descr}\n"
 
             except subprocess.SubprocessError:
                 msg = f"FAIL {commit} {descr}\n"

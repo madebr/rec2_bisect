@@ -9,12 +9,29 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.platform.what }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { name: MinGW,  os: ubuntu-latest,  what: mingw,  ninja: true }
+          - { name: MSVC,   os: windows-latest, what: msvc,   ninja: true, msvc: true }
+          - { name: MinGW,  os: ubuntu-latest,  what: checks }
     steps:
       - name: 'Install Mingw toolchain'
+        if: ${{ matrix.platform == 'mingw' }}
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 ninja-build
+          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64
+      - name: 'Configure vcvars x86'
+        if: ${{ matrix.platform == 'msvc' }}
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64_x86  # host: x64 target: x86
+      - name: Set up ninja
+        if: ${{ matrix.platform.ninja }}
+        uses: ./.github/actions/setup-ninja
       - name: 'Setup Python'
         uses: actions/setup-python@v5
         with:
@@ -33,19 +50,19 @@ jobs:
         run: |
           initial_commit=$(git -C rec2 log --grep="Initial commit" --pretty="%H")
           git -C rec2 log --pretty="%H %s" >/tmp/rec2_commits.txt
-          cmake -S $PWD/rec2 -B /tmp/rec2-build -GNinja -DCMAKE_TOOLCHAIN_FILE=$PWD/rec2/cmake/toolchains/mingw32.cmake
           python scripts/build_history.py \
             --source $PWD/rec2 \
             --build /tmp/rec2-build \
             --commits /tmp/rec2_commits.txt \
-            --log /tmp/build.log
+            --log /tmp/build.log \
+            --what ${{ matrix.platform.what }}
       - name: 'Cat build.log'
         run: |
           cat /tmp/build.log
       - name: 'Upload log'
         uses: actions/upload-artifact@v4
         with:
-          name: log
+          name: ${{ matrix.platform.what }}
           path: |
             /tmp/rec2_commits.txt
             /tmp/build.log
