@@ -47,22 +47,25 @@ jobs:
           fetch-depth: 0
           path: rec2
       - name: 'Build rec2 history'
+        shell: sh
         run: |
           initial_commit=$(git -C rec2 log --grep="Initial commit" --pretty="%H")
-          git -C rec2 log --pretty="%H %s" >/tmp/rec2_commits.txt
+          git -C rec2 log --pretty="%H %s" >rec2_commits.txt
           python scripts/build_history.py \
-            --source $PWD/rec2 \
-            --build /tmp/rec2-build \
-            --commits /tmp/rec2_commits.txt \
-            --log /tmp/build.log \
+            --source rec2 \
+            --build rec2-build \
+            --commits rec2_commits.txt \
+            --log build.log \
             --what ${{ matrix.platform.what }}
       - name: 'Cat build.log'
+        shell: sh
         run: |
-          cat /tmp/build.log
+          cat build.log
       - name: 'Upload log'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.what }}
+          if-no-files-found: error
           path: |
-            /tmp/rec2_commits.txt
-            /tmp/build.log
+            ${{ github.workspace }}/rec2_commits.txt
+            ${{ github.workspace }}/build.log
