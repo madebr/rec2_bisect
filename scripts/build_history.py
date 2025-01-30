@@ -24,13 +24,15 @@ def main():
     if args.what == "mingw":
         subprocess.check_call([
             "cmake", "-S", str(args.source), "-B", str(args.build), "-GNinja",
+            "-DREC2_WERROR=ON",
             f"-DCMAKE_TOOLCHAIN_FILE={args.source}/cmake/toolchains/mingw32.cmake",
         ])
     elif args.what == "msvc":
         subprocess.check_call([
-            "cmake", "-S", str(args.source), "-B", str(args.build),
+            "cmake", "-S", str(args.source), "-B", str(args.build), "-GNinja",
             "-DREC2_WERROR=ON",
-            "-GNinja",
+            "-DCMAKE_C_COMPILER=cl",
+            "-DCMAKE_CXX_COMPILER=cl",
         ])
 
     with args.log.open("a") as fl:

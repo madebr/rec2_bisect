@@ -16,18 +16,18 @@ jobs:
       matrix:
         platform:
           - { name: MinGW,  os: ubuntu-latest,  what: mingw,  ninja: true }
-          - { name: MSVC,   os: windows-latest, what: msvc,   ninja: true, msvc: true }
+          - { name: MSVC,   os: windows-latest, what: msvc,   ninja: true }
           - { name: MinGW,  os: ubuntu-latest,  what: checks }
     steps:
       - name: 'Checkout rec2_bisect'
         uses: actions/checkout@v4
       - name: 'Install Mingw toolchain'
-        if: ${{ matrix.platform == 'mingw' }}
+        if: ${{ matrix.platform.what == 'mingw' }}
         run: |
           sudo apt-get update -y
           sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64
       - name: 'Configure vcvars x86'
-        if: ${{ matrix.platform == 'msvc' }}
+        if: ${{ matrix.platform.what == 'msvc' }}
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64_x86  # host: x64 target: x86
