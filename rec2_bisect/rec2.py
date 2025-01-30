@@ -41,11 +41,17 @@ def is_carma2_game_path(p: Path) -> bool:
 
 
 class REC2:
-    def __init__(self, source_path: Path, build_path: Path, cache_path: Path, game_path: Path):
+    def __init__(self,
+                 source_path: Path,
+                 build_path: Path,
+                 cache_path: Path,
+                 game_path: Path,
+                 windbg_path: Optional[Path]):
         self.source_path = source_path
         self.build_path = build_path
         self.cache_path = cache_path
         self.game_path = game_path
+        self.windbg_path = windbg_path
         self.msvc_toolchain = MSVCToolchain.create(arch="x86")
 
     @property
@@ -100,7 +106,7 @@ class REC2:
         shutil.copyfile(src=build_dll_path, dst=rec2_cache_dll_path)
         shutil.copyfile(src=build_injector_path, dst=rec2_cache_injector_path)
 
-    def run(self, args: list[str]):
+    def create_run_cmd(self, args: list[str]) -> list[str]:
         hash_current = git_hash(self.source_path)
         build_cache_path = self.cache_path / hash_current
         rec2_cache_dll_path = build_cache_path / REC2_DLL_NAME
@@ -110,10 +116,21 @@ class REC2:
             self.build()
         assert rec2_cache_dll_path.is_file()
         assert rec2_cache_injector_path.is_file()
-        run_cmd = [
+        return [
             str(rec2_cache_injector_path),
             "--inject", str(rec2_cache_dll_path),
         ] + args
+
+    def run(self, args: list[str]):
+        run_cmd = self.create_run_cmd(args)
+        print("Running rec2:", run_cmd)
+        print("cwd:", self.game_path)
+        subprocess.check_call(run_cmd, cwd=self.game_path, env=self.run_env)
+
+    def debug(self, args: list[str]):
+        if self.windbg_path or not self.windbg_path.is_file():
+            raise FileNotFoundError("Cannot find WinDbg (install WinDbg, or set windbg.path in config.ini)"
+        run_cmd = [str(self.windbg_path)] + self.create_run_cmd(args)
         print("Running rec2:", run_cmd)
         print("cwd:", self.game_path)
         subprocess.check_call(run_cmd, cwd=self.game_path, env=self.run_env)
@@ -124,17 +141,26 @@ class REC2:
         config_ini = REC2_BISECT_ROOT / "config.ini"
         with config_ini.open() as f:
             config.read_file(f)
-        source_path = Path(config.get("paths", "source", fallback="source")).resolve()
+        source_path = Path(config.get("rec2", "source", fallback="source")).resolve()
         if not is_rec2_source_path(source_path):
             raise ValueError("Invalid source path. Modify config.ini to point to a rec2 source tree.")
-        build_path = Path(config.get("paths", "build", fallback="build")).resolve()
-        cache_path = Path(config.get("paths", "cache", fallback="cache")).resolve()
-        game_path = Path(config.get("paths", "game", fallback="game")).resolve()
+        build_path = Path(config.get("rec2", "build", fallback="build")).resolve()
+        cache_path = Path(config.get("rec2", "cache", fallback="cache")).resolve()
+        game_path = Path(config.get("game", "path", fallback="game")).resolve()
         if not is_carma2_game_path(game_path):
             raise ValueError("Invalid game path. Modify config.ini to point to Carmageddon 2 game path.")
+        windbg_path = config.get("windbg", "path", fallback="").strip())
+        if windbg_path:
+            windbg_path = Path(windbg_path).resolve()
+        else:
+            windbg_path = Path(os.environ.get("LocalAppData", "C:/users/me") + "/Microsoft/WindowsApps/WinDbgX.exe").resolve()
+        if not windbg_path.is_file:
+            windbg_path = None
+
         return cls(
             source_path=source_path,
             build_path=build_path,
             cache_path=cache_path,
             game_path=game_path,
+            windbg_path=windbg_path,
         )

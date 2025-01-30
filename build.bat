@@ -1,1 +1,1 @@
-%cd%\pythonw.exe -m rec2_bisect --action build
+%~dp0\python.exe -m rec2_bisect --action build
