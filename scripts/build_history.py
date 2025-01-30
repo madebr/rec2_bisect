@@ -51,7 +51,7 @@ def main():
                     path_collect_symbols_py = args.source / "scripts/collect-symbols.py"
                     if path_collect_symbols_py.is_file():
                         subprocess.check_call([
-                            sys.executable, str(path_collect_symbols_py), "--summary", "-Werror",
+                            sys.executable, str(path_collect_symbols_py), "-Werror",
                         ])
                         result = "OK"
                     else:
