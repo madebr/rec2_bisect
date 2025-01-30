@@ -19,6 +19,8 @@ jobs:
           - { name: MSVC,   os: windows-latest, what: msvc,   ninja: true, msvc: true }
           - { name: MinGW,  os: ubuntu-latest,  what: checks }
     steps:
+      - name: 'Checkout rec2_bisect'
+        uses: actions/checkout@v4
       - name: 'Install Mingw toolchain'
         if: ${{ matrix.platform == 'mingw' }}
         run: |
@@ -36,8 +38,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: 'Checkout rec2_bisect'
-        uses: actions/checkout@v4
       - name: 'Checkout rec2'
         uses: actions/checkout@v4
         with:

@@ -28,7 +28,9 @@ def main():
         ])
     elif args.what == "msvc":
         subprocess.check_call([
-            "cmake", "-S", str(args.source), "-B", str(args.build), "-GNinja",
+            "cmake", "-S", str(args.source), "-B", str(args.build),
+            "-DREC2_WERROR=ON",
+            "-GNinja",
         ])
 
     with args.log.open("a") as fl:
