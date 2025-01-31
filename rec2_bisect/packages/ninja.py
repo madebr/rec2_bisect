@@ -15,7 +15,7 @@ NINJA_ROOT = REC2_DEPS_ROOT / "ninja"
 NINJA_PATH = NINJA_ROOT
 NINJA_EXE_PATH = NINJA_ROOT / "ninja.exe"
 NINJA_ENV = {
-    "PATH": NINJA_PATH,
+    "PATH": str(NINJA_PATH),
 }
 
 

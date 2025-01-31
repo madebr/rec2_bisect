@@ -9,6 +9,7 @@ import typing
 
 
 from rec2_bisect.paths import REC2_DEPS_ROOT
+from rec2_bisect.util import join_os_environ
 
 MSVC_ROOT = REC2_DEPS_ROOT / "msvc/msvc"
 THIS_PATH = Path(__file__).resolve().parent
@@ -96,7 +97,7 @@ def has_msvc(arch: str) -> bool:
     selftest_obj.unlink(missing_ok=True)
     selftest_exe.unlink(missing_ok=True)
     selftest_pdb.unlink(missing_ok=True)
-    msvc_env = msvc_toolchain.env
+    msvc_env = join_os_environ(msvc_toolchain.env)
     compile_args = [
         msvc_toolchain.cl_exe, "/nologo",
         "/c", str(THIS_PATH / "msvc_selftest.c"),

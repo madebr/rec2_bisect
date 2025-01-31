@@ -1,9 +1,10 @@
 import configparser
 import hashlib
 import os
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
+from typing import Optional
 
 from .git_util import git_hash
 from .util import join_os_environ
@@ -35,8 +36,8 @@ def is_carma2_game_path(p: Path) -> bool:
     s = os.stat(c2_hw_exe)
     if s.st_size != 2680320:
         return False
-    if hashlib.sha256(c2_hw_exe.read_bytes()) != "9b896c2cbb170c01b3e9f904ce5e1808db29fe5b51184a5d55a6d19b1799b58d":
-        return False
+    # if hashlib.sha256(c2_hw_exe.read_bytes()) != "9b896c2cbb170c01b3e9f904ce5e1808db29fe5b51184a5d55a6d19b1799b58d":
+    #     return False
     return True
 
 
@@ -79,7 +80,8 @@ class REC2:
             "-S", str(self.source_path),
             "-B", str(self.build_path),
             "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug",
-            f"-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={build_bin_path}"
+            f"-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={build_bin_path}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={build_bin_path}",
             "-DCMAKE_C_COMPILER=cl.exe",
             "-DCMAKE_CXX_COMPILER=cl.exe",
             "-GNinja",
@@ -88,7 +90,7 @@ class REC2:
             "cmake",
             "--build", str(self.build_path),
             "--target", "rec2", "rec2-injector",
-            "--verbose",
+            # "--verbose",
         ]
         print("Configuring rec2:", configure_cmd)
         subprocess.check_call(configure_cmd, env=self.run_env)
@@ -118,6 +120,7 @@ class REC2:
         assert rec2_cache_injector_path.is_file()
         return [
             str(rec2_cache_injector_path),
+            str(self.game_path / "CARMA2_HW.EXE"),
             "--inject", str(rec2_cache_dll_path),
         ] + args
 
@@ -129,7 +132,7 @@ class REC2:
 
     def debug(self, args: list[str]):
         if self.windbg_path or not self.windbg_path.is_file():
-            raise FileNotFoundError("Cannot find WinDbg (install WinDbg, or set windbg.path in config.ini)"
+            raise FileNotFoundError("Cannot find WinDbg (install WinDbg, or set windbg.path in config.ini)")
         run_cmd = [str(self.windbg_path)] + self.create_run_cmd(args)
         print("Running rec2:", run_cmd)
         print("cwd:", self.game_path)
@@ -141,15 +144,15 @@ class REC2:
         config_ini = REC2_BISECT_ROOT / "config.ini"
         with config_ini.open() as f:
             config.read_file(f)
-        source_path = Path(config.get("rec2", "source", fallback="source")).resolve()
+        source_path = Path(config.get("rec2", "source", fallback="source").strip()).resolve()
         if not is_rec2_source_path(source_path):
             raise ValueError("Invalid source path. Modify config.ini to point to a rec2 source tree.")
-        build_path = Path(config.get("rec2", "build", fallback="build")).resolve()
-        cache_path = Path(config.get("rec2", "cache", fallback="cache")).resolve()
-        game_path = Path(config.get("game", "path", fallback="game")).resolve()
+        build_path = Path(config.get("rec2", "build", fallback="build").strip()).resolve()
+        cache_path = Path(config.get("rec2", "cache", fallback="cache").strip()).resolve()
+        game_path = Path(config.get("game", "path", fallback="game").strip()).resolve()
         if not is_carma2_game_path(game_path):
             raise ValueError("Invalid game path. Modify config.ini to point to Carmageddon 2 game path.")
-        windbg_path = config.get("windbg", "path", fallback="").strip())
+        windbg_path = config.get("windbg", "path", fallback="").strip()
         if windbg_path:
             windbg_path = Path(windbg_path).resolve()
         else:

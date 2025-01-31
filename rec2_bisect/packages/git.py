@@ -12,7 +12,7 @@ GIT_ROOT = REC2_DEPS_ROOT / "git"
 GIT_PATH = GIT_ROOT / "bin"
 GIT_EXE_PATH = GIT_PATH / "git.exe"
 GIT_ENV = {
-    "PATH": GIT_PATH,
+    "PATH": str(GIT_PATH),
 }
 
 def download_extract_git() -> None:

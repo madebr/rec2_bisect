@@ -3,7 +3,7 @@ import os
 
 def join_os_environ(*args) -> dict[str, str]:
     result = {k.upper(): v for k, v in os.environ.items()}
-    for extra_env in args:
+    for extra_env in reversed(args):
         for k, v in extra_env.items():
             k_upper = k.upper()
             if k_upper in ("INCLUDE", "LIB", "PATH"):

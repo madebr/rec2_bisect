@@ -15,7 +15,7 @@ CMAKE_ROOT = REC2_DEPS_ROOT / "cmake"
 CMAKE_PATH = CMAKE_ROOT / "bin"
 CMAKE_EXE_PATH = CMAKE_PATH / "cmake.exe"
 CMAKE_ENV = {
-    "PATH": CMAKE_PATH,
+    "PATH": str(CMAKE_PATH),
 }
 
 
