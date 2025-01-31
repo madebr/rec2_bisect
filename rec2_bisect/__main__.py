@@ -22,11 +22,11 @@ def main():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--action", required=True, choices=("download", "build", "run", "debug"),
                         help="Argument can be download, build, or run")
-    parser.add_argument("arguments", metavar="ARG", nargs="*", help="Argument of 'run'")
+    # parser.add_argument("arguments", metavar="ARG", nargs="*", help="Argument of 'run'")
     args = parser.parse_args()
 
-    if args.arguments and args.action not in ("run", "debug"):
-        parser.error("Arguments are accepted with 'run' action")
+    # if args.arguments and args.action not in ("run", "debug"):
+    #     parser.error("Arguments are accepted with 'run' action")
 
     deps_available = dep_manager.check_install_dependencies()
     if args.action != "download" and not all(deps_available.values()):
@@ -49,10 +49,10 @@ def main():
 
     rec2 = REC2.create()
     if args.action == "run":
-        rec2.run(args.arguments)
+        rec2.run([])
         return 0
     elif args.action == "debug":
-        rec2.debug(args.arguments)
+        rec2.debug([])
         return 0
     elif args.action == "build":
         rec2.build()

@@ -2,6 +2,7 @@ import configparser
 import hashlib
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 from typing import Optional
@@ -16,6 +17,7 @@ from .packages.ninja import NINJA_ENV
 REC2_BISECT_ROOT = Path(__file__).resolve().parent
 
 REC2_DLL_NAME = "rec2.dll"
+REC2_PDB_NAME = "rec2.pdb"
 REC2_INJECTOR_EXE_NAME = "rec2-injector.exe"
 
 
@@ -47,11 +49,13 @@ class REC2:
                  build_path: Path,
                  cache_path: Path,
                  game_path: Path,
+                 run_args: list[str],
                  windbg_path: Optional[Path]):
         self.source_path = source_path
         self.build_path = build_path
         self.cache_path = cache_path
         self.game_path = game_path
+        self.run_args = run_args
         self.windbg_path = windbg_path
         self.msvc_toolchain = MSVCToolchain.create(arch="x86")
 
@@ -67,8 +71,10 @@ class REC2:
     def build(self):
         build_bin_path = self.build_path / "bin"
         build_dll_path = build_bin_path / REC2_DLL_NAME
+        build_pdb_path = build_bin_path / REC2_PDB_NAME
         build_injector_path = build_bin_path / REC2_INJECTOR_EXE_NAME
         build_dll_path.unlink(missing_ok=True)
+        build_pdb_path.unlink(missing_ok=True)
         build_injector_path.unlink(missing_ok=True)
 
         assert not build_dll_path.is_file()
@@ -79,6 +85,7 @@ class REC2:
             "cmake",
             "-S", str(self.source_path),
             "-B", str(self.build_path),
+            "-DCMAKE_BUILD_TYPE=Debug",
             "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug",
             f"-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={build_bin_path}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={build_bin_path}",
@@ -103,9 +110,12 @@ class REC2:
         shutil.rmtree(build_cache_path, ignore_errors=True)
         build_cache_path.mkdir(parents=True)
         rec2_cache_dll_path = build_cache_path / REC2_DLL_NAME
+        rec2_cache_pdb_path = build_cache_path / REC2_PDB_NAME
         rec2_cache_injector_path = build_cache_path / REC2_INJECTOR_EXE_NAME
-        print(f"Copying {REC2_DLL_NAME} and {REC2_INJECTOR_EXE_NAME} to {rec2_cache_dll_path}")
+        print(f"Copying {REC2_DLL_NAME}, {REC2_PDB_NAME} and {REC2_INJECTOR_EXE_NAME} to {rec2_cache_dll_path}")
         shutil.copyfile(src=build_dll_path, dst=rec2_cache_dll_path)
+        if build_pdb_path.is_file():
+            shutil.copyfile(src=build_pdb_path, dst=rec2_cache_pdb_path)
         shutil.copyfile(src=build_injector_path, dst=rec2_cache_injector_path)
 
     def create_run_cmd(self, args: list[str]) -> list[str]:
@@ -122,7 +132,7 @@ class REC2:
             str(rec2_cache_injector_path),
             str(self.game_path / "CARMA2_HW.EXE"),
             "--inject", str(rec2_cache_dll_path),
-        ] + args
+        ] + ["--"] + args + self.run_args
 
     def run(self, args: list[str]):
         run_cmd = self.create_run_cmd(args)
@@ -131,9 +141,14 @@ class REC2:
         subprocess.check_call(run_cmd, cwd=self.game_path, env=self.run_env)
 
     def debug(self, args: list[str]):
-        if self.windbg_path or not self.windbg_path.is_file():
+        hash_current = git_hash(self.source_path)
+        build_cache_path = self.cache_path / hash_current
+        if not self.windbg_path or not self.windbg_path.is_file():
             raise FileNotFoundError("Cannot find WinDbg (install WinDbg, or set windbg.path in config.ini)")
-        run_cmd = [str(self.windbg_path)] + self.create_run_cmd(args)
+        run_cmd = [
+            str(self.windbg_path),
+            "-y", str(build_cache_path),
+        ] + self.create_run_cmd(args)
         print("Running rec2:", run_cmd)
         print("cwd:", self.game_path)
         subprocess.check_call(run_cmd, cwd=self.game_path, env=self.run_env)
@@ -152,6 +167,11 @@ class REC2:
         game_path = Path(config.get("game", "path", fallback="game").strip()).resolve()
         if not is_carma2_game_path(game_path):
             raise ValueError("Invalid game path. Modify config.ini to point to Carmageddon 2 game path.")
+        game_args = config.get("game", "arguments", fallback="").strip()
+        if not game_args:
+            run_args = []
+        else:
+            run_args = shlex.split(game_args)
         windbg_path = config.get("windbg", "path", fallback="").strip()
         if windbg_path:
             windbg_path = Path(windbg_path).resolve()
@@ -165,5 +185,6 @@ class REC2:
             build_path=build_path,
             cache_path=cache_path,
             game_path=game_path,
+            run_args=run_args,
             windbg_path=windbg_path,
         )

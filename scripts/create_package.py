@@ -62,6 +62,7 @@ with zipfile.ZipFile(ZIP_PACKAGE_PATH, "w") as zf:
         for filename in filenames:
             zf.write(str(Path(root) / filename), arcname=str(arc_root / rel_path / filename))
     zf.write(PROJECT_ROOT / "run.bat", arcname=str(arc_root / "run.bat"))
+    zf.write(PROJECT_ROOT / "debug.bat", arcname=str(arc_root / "debug.bat"))
     zf.write(PROJECT_ROOT / "build.bat", arcname=str(arc_root / "build.bat"))
     zf.write(PROJECT_ROOT / "download.bat", arcname=str(arc_root / "download.bat"))
 
